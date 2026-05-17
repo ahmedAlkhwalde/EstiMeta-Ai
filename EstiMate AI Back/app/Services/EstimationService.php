@@ -56,7 +56,7 @@ class EstimationService
     public function estimateEffort($ucp) {
        
        
-        $pf = 5; 
+        $pf = 2; 
         
         return $ucp * $pf; 
     }
