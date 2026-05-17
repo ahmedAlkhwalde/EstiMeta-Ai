@@ -106,7 +106,7 @@ class SoftwareAnalystController extends Controller
     /**
      * معالجة البيانات النهائية وحسابها وحفظها وتوليد رابط التقرير بناءً على قوانين المحاضرات
      */
-    private function processFinalData($aiResponse)
+   private function processFinalData($aiResponse)
     {
         preg_match('/\{.*\}/s', $aiResponse, $matches);
         
@@ -116,30 +116,29 @@ class SoftwareAnalystController extends Controller
             if ($jsonData && isset($jsonData['data'])) {
                 $data = $jsonData['data'];
 
-                // 1. الحساب باستخدام السيرفس المحدث بالقوانين الرسمية
+                // الحساب وفق المعايرة الرياضية الجديدة والمطابقة للمحاضرات
                 $fp = $this->estimationService->calculateFP($data);
                 $ucp = $this->estimationService->calculateUCP($data);
                 $effort = $this->estimationService->estimateEffort($ucp);
 
-                // 2. تعديل الحفظ بكلفة ساعة منطقية (10$ بدلاً من 50$)
                 $project = SoftwareProject::create(array_merge($data, [
-                    'name' => 'نظام إدارة الصيدلية الذكي - تقدير رسمي',
+                    'name' => $data['name'] ?? 'نظام إدارة الصيدلية الذكي - تقييم هندسي معتمد',
                     'final_fp' => $fp,
                     'final_ucp' => $ucp,
                     'estimated_effort' => $effort,
-                    'estimated_cost' => $effort * 10 // 10$ للساعة البرمجية محلياً لتصبح الأرقام منطقية 100%
+                    'estimated_cost' => $effort * 5 // احتساب 5$ للساعة لتكون التكلفة منطقية ومطابقة للواقع التجاري المحلي
                 ]));
 
                 return response()->json([
                     'status' => 'completed',
                     'project_id' => $project->id,
                     'report_url' => url('/report/' . $project->id), 
-                    'message' => 'تم استخراج البيانات وحساب التقديرات بناءً على معايير المادة بنجاح!',
+                    'message' => 'تمت معالجة البيانات وتصحيح العوامل الحجمية بنجاح!',
                     'results' => $project
                 ]);
             }
         }
 
-        return response()->json(['error' => 'فشل في تحليل البيانات النهائية المرسلة من AI'], 500);
+        return response()->json(['error' => 'فشل في قراءة مخرجات التحليل'], 500);
     }
 }
